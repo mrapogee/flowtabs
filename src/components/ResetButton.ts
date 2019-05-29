@@ -6,8 +6,13 @@ export const ResetButton = styled.button`
   min-width: 0;
   border: none;
   font-size: inherit;
+  text-align: inherit;
 
   &:focus {
     outline: none;
+  }
+
+  &:hover {
+    cursor: pointer;
   }
 `;

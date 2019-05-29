@@ -1,66 +1,93 @@
 import * as React from "react";
-import { WindowTaskState, ExtensionMessage } from "../interfaces";
-import { Label, Segment, Icon } from "semantic-ui-react";
-import { TabLabel } from "./TabLabel";
-import styled from "styled-components";
+import { WindowTaskState } from "../interfaces";
+import styled, { css } from "styled-components";
 import { WindowLabel } from "./WindowLabel";
 import { set } from "immutable";
 import { ResetButton } from "./ResetButton";
-import { useTabs } from "../hooks/useTabs";
+import { Icon } from "semantic-ui-react";
 
 interface Props {
   window: chrome.windows.Window;
   state: WindowTaskState;
+  selected?: boolean;
   current: boolean;
   onChangeState: (state: WindowTaskState) => void;
+  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => void;
+  children?: React.ReactNode;
 }
 
-const MAX_TABS = 3;
+const selectedBackground = css`
+  background-color: rgba(0, 0, 0, 0.02) !important;
+`;
 
-const HeaderContainer = styled.div`
+const ActionsContainer = styled.div`
+  opacity: 0;
+  margin-left: auto;
   display: flex;
-  align-items: center;
 `;
 
-const TabContainer = styled.div`
-  margin-top: 16px;
-  width: 100%;
-`;
-
-const Container = styled(Segment)`
+const Container = styled(({ selected, ...rest }: any) => <div {...rest} />)`
   display: flex;
   flex-direction: column;
   align-items: stretch;
   padding: 16px;
   font-size: 12px;
   color: #3d3d3d;
+  padding: 0 !important;
+  background-color: #fff;
 
   &:hover {
-    background-color: #f8f8f8 !important;
+    cursor: pointer;
+  }
+
+  ${props => props.selected && selectedBackground}
+`;
+
+const HeaderContainer = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 16px 16px 8px 16px;
+
+  &&:hover > ${ActionsContainer} {
+    opacity: 1;
   }
 `;
 
-const IconButton = styled(ResetButton)`
-  margin-left: auto;
+const CloseButton = styled(ResetButton)`
   color: #5e5e5e;
+`;
+
+const FaveButton = styled(({ saved, ...rest }: any) => (
+  <ResetButton {...rest} />
+))`
+  color: ${props => (props.saved ? "" : "#5e5e5e")};
+  font-size: 12px;
+  margin-right: 4px;
 `;
 
 const EyeIcon = styled(Icon)`
   align-self: flex-start;
   padding-top: 4px;
-  padding-right: 8px;
+  margin-right: 8px !important;
 `;
+
+const toggleSaved = (state: WindowTaskState, tabs: chrome.tabs.Tab[]) => {};
 
 export const WindowTask = ({
   window,
+  selected = false,
   current,
   state,
-  onChangeState
+  onChangeState,
+  onMouseEnter,
+  children
 }: Props) => {
-  const tabs = useTabs(window);
+  const tabs = window.tabs as chrome.tabs.Tab[];
 
   return (
     <Container
+      selected={selected}
+      onMouseEnter={onMouseEnter}
       onClick={() => {
         chrome.windows.update(window.id, { focused: true });
       }}
@@ -71,29 +98,25 @@ export const WindowTask = ({
           state={state}
           onChange={name => onChangeState(set(state, "taskName", name))}
         />
-        <IconButton
-          onClick={e => {
-            e.stopPropagation();
-            chrome.windows.remove(window.id);
-          }}
-        >
-          <Icon name="close" />
-        </IconButton>
+        <ActionsContainer>
+          <FaveButton
+            saved={state.savedTaskId != null}
+            onClick={() => toggleSaved(state, tabs)}
+          >
+            <Icon name="star" />
+          </FaveButton>
+          <CloseButton
+            onClick={e => {
+              e.stopPropagation();
+              chrome.windows.remove(window.id);
+            }}
+          >
+            <Icon name="close" />
+          </CloseButton>
+        </ActionsContainer>
       </HeaderContainer>
 
-      <TabContainer>
-        {tabs
-          .filter(tab => tab.url != null)
-          .slice(0, MAX_TABS)
-          .map(tab => (
-            <TabLabel key={tab.id} tab={tab} />
-          ))}
-        {tabs.length > MAX_TABS ? (
-          <Label style={{ lineHeight: "16px", padding: "8px" }}>
-            + {tabs.length - MAX_TABS} tabs
-          </Label>
-        ) : null}
-      </TabContainer>
+      {children}
     </Container>
   );
 };

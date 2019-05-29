@@ -17,6 +17,7 @@ const Input = styled(InputWithClassNameMapped)`
   border-bottom: 2px solid transparent;
   line-height: 24px;
   color: inherit;
+  min-width: 150px;
 
   &:hover,
   &:focus {
@@ -34,7 +35,7 @@ export const WindowLabel = ({ state, onChange }: Props) => {
   return (
     <div>
       <Input
-        placeholder="Unnamed tab group"
+        placeholder="Unnamed window"
         value={state.taskName}
         onClick={e => {
           e.stopPropagation();

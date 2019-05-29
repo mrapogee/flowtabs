@@ -1,54 +1,79 @@
 import * as React from "react";
-import { Label } from "semantic-ui-react";
 import styled from "styled-components";
+import { ResetButton } from "./ResetButton";
 
 interface Props {
   tab: chrome.tabs.Tab;
+  selected?: boolean;
+  actions?: React.ReactNode;
+  onMouseEnter?: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseLeave?: (e: React.MouseEvent<HTMLElement>) => void;
 }
-
-const TRUNCATE_LENGTH = 23;
 
 const FavImg = styled.img`
   &&& {
     width: 16px !important;
-    height: auto !important;
+    height: auto;
     margin-right: 8px;
   }
 `;
 
-const truncate = (length: number, text: string) => {
-  if (text.length <= length) {
-    return text;
-  }
+const TabText = styled.span`
+  flex-grow: 1;
+  overflow: hidden;
+  padding-right: 8px;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(
+    90deg,
+    black 0%,
+    black calc(100% - 8px),
+    rgba(0, 0, 0, 0) calc(100% - 4px),
+    rgba(0, 0, 0, 0) 100%
+  );
+`;
 
-  const truncated = text.slice(0, length - 3);
-  const lastSpace = text.lastIndexOf(" ");
+const LabelWithTruncate = styled(({ selected, ...rest }: any) => (
+  <div {...rest} />
+))`
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  font-size: 12px;
+  padding-left: 8px;
+  background: ${props =>
+    props.selected ? "rgba(0, 0, 0, 0.05)" : "transparent"};
+`;
 
-  if (lastSpace === -1 || truncated.length - lastSpace > 8) {
-    return truncated + "...";
-  }
-
-  return truncated.slice(0, lastSpace) + "...";
-};
-
-export const TabLabel = ({ tab }: Props) => {
+export const TabLabel = ({
+  tab,
+  selected = false,
+  onMouseEnter,
+  onMouseLeave,
+  actions
+}: Props) => {
   if (tab.id == null || tab.title == null) {
     return null;
   }
 
   return (
-    <Label
-      as="a"
-      color="grey"
-      style={{ padding: "8px" }}
+    <LabelWithTruncate
+      selected={selected}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       onClick={(e: any) => {
         e.stopPropagation();
         chrome.tabs.update(tab.id as number, { selected: true });
         chrome.windows.update(tab.windowId, { focused: true });
       }}
     >
-      <FavImg src={tab.favIconUrl} />
-      {truncate(TRUNCATE_LENGTH, tab.title)}
-    </Label>
+      {tab.favIconUrl && <FavImg src={tab.favIconUrl} />}
+      <TabText>{tab.title}</TabText>
+      {selected && actions}
+    </LabelWithTruncate>
   );
 };
