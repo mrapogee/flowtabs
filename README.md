@@ -1,4 +1,4 @@
-[[https://github.com/mrapogee/flowtabs/blob/master/img/flowtabs-logo.png|alt="FlowTabs"]]
+![Flow Tabs](https://github.com/mrapogee/flowtabs/blob/master/img/flowtabs-logo.png)
 
 # Flow Tabs
 
