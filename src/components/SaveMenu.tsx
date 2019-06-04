@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button, Dropdown, Icon } from "semantic-ui-react";
-import { saveLocalWindowState, deleteSavedWindow } from "../hooks/getWindows";
+import { saveLocalWindowState, deleteSavedWindow } from "../lib/chromeActions";
 import { ChromeTab, ChromeWindow, WindowFlowState } from "../interfaces";
 import uuid = require("uuid");
 

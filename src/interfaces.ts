@@ -4,7 +4,7 @@ import { TAB } from "./lib/dragTypes";
 
 export interface WindowFlowState {
   stateId: string | null;
-  windowId: number | null;
+  windowId: BID | null;
   name: string;
   sync: boolean;
   saved: boolean;
@@ -21,19 +21,19 @@ export interface WindowMappings {
 
 export type BID = string | number;
 
-export interface ChromeWindow<ID = string | number> {
+export interface ChromeWindow<ID = BID> {
   id: ID;
   active: boolean;
   state?: WindowFlowState;
   tabs: ChromeTab[];
 }
 
-export interface ChromeTab<ID = number | string> {
+export interface ChromeTab<ID = BID> {
   id: ID;
   url: string;
   title: string;
   favIconUrl: string | null;
-  windowId: number;
+  windowId: BID;
 }
 
 export type WindowState = Map<number, WindowFlowState>;

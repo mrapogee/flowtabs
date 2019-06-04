@@ -2,12 +2,8 @@ import * as React from "react";
 import styled from "styled-components";
 import { WindowTask } from "./WindowTask";
 import { PopupHeader } from "./PopupHeader";
-import {
-  getWindows,
-  updateWindowState,
-  defaultState
-} from "../hooks/getWindows";
-import { getCurrentWindow } from "../hooks/getCurrentWindow";
+import { getWindows } from "../lib/getWindows";
+import { getCurrentWindow } from "../lib/getCurrentWindow";
 import { searchWindows, bringCurrentToFront } from "../lib/searchTools";
 import {
   WindowState,
@@ -28,7 +24,9 @@ import { oc } from "ts-optchain";
 import {
   commitRearrangeTabs,
   activateTab,
-  activateWindow
+  activateWindow,
+  updateWindowState,
+  defaultState
 } from "../lib/chromeActions";
 import { useObservable, useSubject } from "../lib/rxHooks";
 import {
@@ -257,47 +255,51 @@ const makePopupState = (
   const effects$ = merge(
     rearrangeTab$.pipe(
       filter((query): query is TypeOrderCommitQuery => query.type === "commit"),
-      withLatestFrom(windowsWithArrangement$, (commit, windows) => {
-        const query = findMap(windows, window => {
-          return findMap(window.tabs, (tab, index) => {
-            if (tab.id === commit.tabId) {
-              const atEnd = window.tabs.length === index + 1;
+      withLatestFrom(
+        windows$,
+        windowsWithArrangement$,
+        (commit, windows, arrangedWindows) => {
+          const query = findMap(arrangedWindows, window => {
+            return findMap(window.tabs, (tab, index) => {
+              if (tab.id === commit.tabId) {
+                const atEnd = window.tabs.length === index + 1;
 
-              if (window.tabs.length === 1) {
+                if (window.tabs.length === 1) {
+                  return {
+                    type: "preview" as "preview",
+                    windowId: window.id,
+                    siblingId: null,
+                    tab,
+                    by: 0
+                  };
+                }
+
                 return {
                   type: "preview" as "preview",
                   windowId: window.id,
-                  siblingId: null,
+                  siblingId: atEnd
+                    ? window.tabs[index - 1].id
+                    : window.tabs[index + 1].id,
                   tab,
-                  by: 0
+                  by: atEnd ? 1 : 0
                 };
               }
-
-              return {
-                type: "preview" as "preview",
-                windowId: window.id,
-                siblingId: atEnd
-                  ? window.tabs[index - 1].id
-                  : window.tabs[index + 1].id,
-                tab,
-                by: atEnd ? 1 : 0
-              };
-            }
+            });
           });
-        });
 
-        if (query != null) {
-          const from = findMap(windows, window =>
-            findMap(window.tabs, tab =>
-              tab.id === query.tab.id ? window.state || null : undefined
-            )
-          );
+          if (query != null) {
+            const from = findMap(windows, window =>
+              findMap(window.tabs, tab =>
+                tab.id === query.tab.id ? window.state || null : undefined
+              )
+            );
 
-          const to = windows.find(window => query.windowId === window.id);
+            const to = windows.find(window => query.windowId === window.id);
 
-          commitRearrangeTabs(from!, to!.state!, query);
+            commitRearrangeTabs(from!, to!.state!, query);
+          }
         }
-      })
+      )
     ),
     keydown$.pipe(
       filter(event => event.key === "Enter"),
@@ -305,9 +307,7 @@ const makePopupState = (
         query$,
         selectedTab$,
         selectedWindow$,
-        windows$.pipe(
-          filter((windows): windows is ChromeWindow[] => windows != null)
-        ),
+        windows$,
         (event, query, selectedTab, selectedWindow, windows) => {
           if (query.type === "addWindow") {
             addNewTask(query.name.trim());

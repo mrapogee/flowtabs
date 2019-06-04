@@ -4,10 +4,9 @@ import styled, { css } from "styled-components";
 import { WindowLabel } from "./WindowLabel";
 import { ResetButton } from "./ResetButton";
 import { Icon } from "semantic-ui-react";
-import { getDefaultState } from "../hooks/getWindows";
 import { oc } from "ts-optchain";
 import { SaveMenu } from "./SaveMenu";
-import { activateWindow } from "../lib/chromeActions";
+import { activateWindow, getDefaultState } from "../lib/chromeActions";
 
 interface Props {
   window: ChromeWindow;

@@ -135,8 +135,6 @@ export const TabLabel = ({
       onClick={(e: any) => {
         e.stopPropagation();
         activateTab(window, tab);
-        chrome.tabs.update(tab.id as number, { selected: true });
-        chrome.windows.update(tab.windowId, { focused: true });
       }}
     >
       <TabLabelContent tab={tab} />
