@@ -1,18 +1,21 @@
 import * as React from "react";
-import { WindowTaskState } from "../interfaces";
+import { WindowFlowState, ChromeWindow } from "../interfaces";
 import styled, { css } from "styled-components";
 import { WindowLabel } from "./WindowLabel";
-import { set } from "immutable";
 import { ResetButton } from "./ResetButton";
 import { Icon } from "semantic-ui-react";
+import { getDefaultState } from "../hooks/getWindows";
+import { oc } from "ts-optchain";
+import { SaveMenu } from "./SaveMenu";
+import { activateWindow } from "../lib/chromeActions";
 
 interface Props {
-  window: chrome.windows.Window;
-  state: WindowTaskState;
+  window: ChromeWindow;
   selected?: boolean;
   current: boolean;
-  onChangeState: (state: WindowTaskState) => void;
-  onMouseEnter: (e: React.MouseEvent<HTMLElement>) => void;
+  onChangeState: (state: WindowFlowState) => void;
+  onMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseLeave: (e: React.MouseEvent<HTMLElement>) => void;
   children?: React.ReactNode;
 }
 
@@ -22,8 +25,8 @@ const selectedBackground = css`
 
 const ActionsContainer = styled.div`
   opacity: 0;
-  margin-left: auto;
   display: flex;
+  margin-left: auto;
 `;
 
 const Container = styled(({ selected, ...rest }: any) => <div {...rest} />)`
@@ -53,16 +56,10 @@ const HeaderContainer = styled.div`
   }
 `;
 
-const CloseButton = styled(ResetButton)`
+const IconButton = styled(ResetButton)`
+  margin-left: 8px;
   color: #5e5e5e;
-`;
-
-const FaveButton = styled(({ saved, ...rest }: any) => (
-  <ResetButton {...rest} />
-))`
-  color: ${props => (props.saved ? "" : "#5e5e5e")};
-  font-size: 12px;
-  margin-right: 4px;
+  font-size: 16px;
 `;
 
 const EyeIcon = styled(Icon)`
@@ -71,48 +68,46 @@ const EyeIcon = styled(Icon)`
   margin-right: 8px !important;
 `;
 
-const toggleSaved = (state: WindowTaskState, tabs: chrome.tabs.Tab[]) => {};
-
 export const WindowTask = ({
   window,
   selected = false,
   current,
-  state,
   onChangeState,
-  onMouseEnter,
+  onMouseMove,
+  onMouseLeave,
   children
 }: Props) => {
-  const tabs = window.tabs as chrome.tabs.Tab[];
+  const { state = getDefaultState(window), tabs = [] } = window;
+  const isSavedWindow = oc(window).state.saved(false);
 
   return (
     <Container
       selected={selected}
-      onMouseEnter={onMouseEnter}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
       onClick={() => {
-        chrome.windows.update(window.id, { focused: true });
+        activateWindow(window);
       }}
     >
       <HeaderContainer>
         {current ? <EyeIcon name="eye" /> : null}
         <WindowLabel
           state={state}
-          onChange={name => onChangeState(set(state, "taskName", name))}
+          onChange={name => onChangeState({ ...state, name: name })}
         />
+
         <ActionsContainer>
-          <FaveButton
-            saved={state.savedTaskId != null}
-            onClick={() => toggleSaved(state, tabs)}
-          >
-            <Icon name="star" />
-          </FaveButton>
-          <CloseButton
-            onClick={e => {
-              e.stopPropagation();
-              chrome.windows.remove(window.id);
-            }}
-          >
-            <Icon name="close" />
-          </CloseButton>
+          <SaveMenu window={window} state={state} />
+          {window.active && (
+            <IconButton
+              onClick={e => {
+                e.stopPropagation();
+                chrome.windows.remove(window.id as number);
+              }}
+            >
+              <Icon name="close" />
+            </IconButton>
+          )}
         </ActionsContainer>
       </HeaderContainer>
 

@@ -1,4 +1,10 @@
-import { TabQuery, WindowState } from "../interfaces";
+import {
+  TabQuery,
+  WindowState,
+  ChromeWindow,
+  SearchScope
+} from "../interfaces";
+import { oc } from "ts-optchain";
 const fuzzyMatch = require("fuzzysearch");
 
 (window as any).fuzzyMatch = fuzzyMatch;
@@ -7,32 +13,44 @@ const getDomain = (url: string) => {
   return new URL(url).hostname.split(".").slice(-2)[0];
 };
 
-export const searchWindows = (
-  windows: chrome.windows.Window[],
-  state: WindowState,
-  query: TabQuery
-) => {
+const getWindowsInScope = (scope: SearchScope, windows: ChromeWindow[]) => {
+  if (scope === "active") {
+    return windows.filter(window => window.active);
+  }
+
+  if (scope === "saved") {
+    return windows.filter(window => oc(window).state.saved(false));
+  }
+
+  return windows;
+};
+
+export const searchWindows = (windows: ChromeWindow[], query: TabQuery) => {
   if (query.type === "addWindow") {
-    return windows;
+    return windows.filter(window => window.active);
   }
 
   if (query.type === "search") {
     const queryText = query.query.toLowerCase();
+    const scopedWindows = getWindowsInScope(query.scope, windows);
+
+    if (queryText === "") {
+      return scopedWindows;
+    }
 
     if (query.content === "tasks") {
-      return windows.filter(window => {
-        const windowState = state.get(window.id);
+      return scopedWindows.filter(window => {
+        const { state } = window;
+        if (state != null) {
+          const { name } = state;
 
-        if (windowState != null) {
-          const { taskName } = windowState;
-
-          return fuzzyMatch(queryText, taskName.toLowerCase());
+          return fuzzyMatch(queryText, name.toLowerCase());
         }
 
         return false;
       });
     } else if (query.content === "tabs") {
-      return windows
+      return scopedWindows
         .map(window => {
           return {
             ...window,
@@ -56,7 +74,7 @@ export const searchWindows = (
 
 export const bringCurrentToFront = (
   currentWindow: number | null,
-  windows: chrome.windows.Window[]
+  windows: ChromeWindow[]
 ) => {
   if (currentWindow == null) {
     return windows;

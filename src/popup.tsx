@@ -2,19 +2,14 @@ import * as React from "react";
 import "semantic-ui-css/semantic.min.css";
 import "./base.css";
 import { render } from "react-dom";
-import { WindowTaskState } from "./interfaces";
-import { Map } from "immutable";
 import { Popup } from "./components/Popup";
+import { DragDropContextProvider } from "react-dnd";
+import HTML5Backend from "react-dnd-html5-backend";
 
-chrome.windows.getAll(windows => {
-  const initialWindows = Map<string, WindowTaskState>(
-    JSON.parse(localStorage.getItem("tabontask-active-tabs") || "{}")
-  )
-    .mapKeys(key => Number(key))
-    .filter((value, key) => windows.some(window => window.id === key));
+render(
+  <DragDropContextProvider backend={HTML5Backend}>
+    <Popup />
+  </DragDropContextProvider>,
 
-  render(
-    <Popup initialWindowsState={initialWindows} />,
-    document.getElementById("app")
-  );
-});
+  document.getElementById("app")
+);

@@ -1,7 +1,8 @@
 import * as React from "react";
-import { WindowTaskState } from "../interfaces";
+import { WindowFlowState } from "../interfaces";
 import styled from "styled-components";
 import AutosizeInput from "react-input-autosize";
+import { useDebouncedControl } from "../hooks/useDebouncedControl";
 
 const InputWithClassNameMapped = ({
   className,
@@ -17,7 +18,7 @@ const Input = styled(InputWithClassNameMapped)`
   border-bottom: 2px solid transparent;
   line-height: 24px;
   color: inherit;
-  min-width: 150px;
+  box-sizing: border-box;
 
   &:hover,
   &:focus {
@@ -27,21 +28,24 @@ const Input = styled(InputWithClassNameMapped)`
 `;
 
 interface Props {
-  state: WindowTaskState;
+  state: WindowFlowState;
   onChange: (name: string) => void;
 }
 
 export const WindowLabel = ({ state, onChange }: Props) => {
+  const [name, onChangeName] = useDebouncedControl(300, state.name, onChange);
+
   return (
     <div>
       <Input
         placeholder="Unnamed window"
-        value={state.taskName}
+        value={name}
+        onBlur={e => onChange(e.target.value)}
         onClick={e => {
           e.stopPropagation();
         }}
         onChange={e => {
-          onChange(e.target.value);
+          onChangeName(e.target.value);
         }}
       />
     </div>

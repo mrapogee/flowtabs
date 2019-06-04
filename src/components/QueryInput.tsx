@@ -7,7 +7,7 @@ import { TabQuery, PropsOf } from "../interfaces";
 type Props = {
   query: TabQuery;
   onChange: (query: TabQuery) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 };
 
 const SearchInput = styled(Input)`
@@ -33,14 +33,18 @@ const modifierIcons = {
   "*": "asterisk" as "asterisk"
 };
 
-export const QueryInput = ({ query, onChange, onKeyDown }: Props) => {
+export const QueryInput = ({
+  query,
+  onChange,
+  onKeyDown = () => {}
+}: Props) => {
   const modifiers = getQueryModifiers(query);
 
   return (
     <SearchInput
       icon={query.type !== "addWindow"}
       labelPosition={modifiers.length > 0 ? "left" : undefined}
-      placeholder={query.type === "addWindow" ? "New task name" : "Search"}
+      placeholder={query.type === "addWindow" ? "New window name" : "Search"}
       autoFocus
       value={getQueryText(query)}
       onKeyDown={(e: any) => {

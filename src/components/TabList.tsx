@@ -3,11 +3,15 @@ import { TabLabel } from "./TabLabel";
 import styled, { css } from "styled-components";
 import { ResetButton } from "./ResetButton";
 import { Icon } from "semantic-ui-react";
+import { ChromeTab, TabOrderQuery, ChromeWindow, BID } from "../interfaces";
+import { handleTabRearrangment } from "../lib/windowUtils";
+import { removeTab } from "../lib/chromeActions";
 
 interface Props {
-  tabs: chrome.tabs.Tab[];
-  selectedTab?: number | null;
-  onSelectTab?: (id: number | null) => void;
+  window: ChromeWindow;
+  selectedTab?: BID | null;
+  onSelectTab?: (id: BID | null) => void;
+  onRearrangeTab: (query: TabOrderQuery) => void;
 }
 
 const TabContainer = styled.div`
@@ -16,8 +20,8 @@ const TabContainer = styled.div`
   align-items: stretch;
 
   && > * {
-    padding: 12px 16px;
     border-left: none;
+    height: 40px;
     &:not(:last-child) {
     }
   }
@@ -25,33 +29,44 @@ const TabContainer = styled.div`
 
 const CloseButton = styled(ResetButton)`
   color: #5e5e5e;
-  padding: 8px;
-  margin: -8px;
+  padding: 0 16px;
+  align-self: stretch;
+  font-size: 16px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
 `;
 
 export const TabList = ({
-  tabs,
+  window,
   selectedTab,
+  onRearrangeTab,
   onSelectTab = () => {}
 }: Props) => {
   return (
     <TabContainer>
-      {tabs.map(tab => (
+      {window.tabs.map((tab, index) => (
         <TabLabel
-          selected={selectedTab === tab.id}
-          onMouseEnter={() => tab.id != null && onSelectTab(tab.id)}
-          onMouseLeave={() => tab.id != null && onSelectTab(null)}
           key={tab.id}
+          window={window}
+          selected={selectedTab === tab.id}
+          onHoverTab={handleTabRearrangment("y", index, tab, onRearrangeTab)}
+          onDropTab={tabId => onRearrangeTab({ type: "commit", tabId })}
+          onMouseMove={() =>
+            tab.id != null && selectedTab !== tab.id && onSelectTab(tab.id)
+          }
+          onMouseLeave={() => tab.id != null && onSelectTab(null)}
           tab={tab}
           actions={
             <CloseButton
               onClick={e => {
                 e.stopPropagation();
                 e.preventDefault();
-                tab.id && chrome.tabs.remove(tab.id);
+                removeTab(window.state!, tab.id);
               }}
             >
-              <Icon name="close" />
+              <Icon fitted name="close" />
             </CloseButton>
           }
         />

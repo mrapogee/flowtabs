@@ -1,16 +1,18 @@
 import * as React from "react";
 import styled from "styled-components";
 import { Menu, Button } from "semantic-ui-react";
-import { WindowState, TabQuery, SearchScope } from "../interfaces";
+import {
+  WindowState,
+  TabQuery,
+  SearchScope,
+  ChromeWindow
+} from "../interfaces";
 import { QueryInput } from "./QueryInput";
 import { defaultQuery } from "../lib/queries";
 
 interface Props {
-  windowState: WindowState;
-  windows: chrome.windows.Window[];
   query: TabQuery;
   onChangeQuery: (query: TabQuery) => void;
-  onSearchKeyDown: (down: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const HeaderContainer = styled.div`
@@ -65,20 +67,10 @@ const updateScope = (query: TabQuery, scope: SearchScope): TabQuery => {
   };
 };
 
-export const PopupHeader = ({
-  windows,
-  windowState,
-  onSearchKeyDown,
-  query,
-  onChangeQuery
-}: Props) => {
+export const PopupHeader = ({ query, onChangeQuery }: Props) => {
   return (
     <HeaderContainer>
-      <QueryInput
-        query={query}
-        onChange={onChangeQuery}
-        onKeyDown={onSearchKeyDown}
-      />
+      <QueryInput query={query} onChange={onChangeQuery} />
       <NavContainer>
         <PaddedMenu pointing secondary>
           <ScopeMenuItem

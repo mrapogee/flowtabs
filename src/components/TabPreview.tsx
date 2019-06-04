@@ -2,12 +2,14 @@ import * as React from "react";
 import { TabLabel } from "./TabLabel";
 import styled from "styled-components";
 import { Button } from "semantic-ui-react";
-import { TabList } from "./TabList";
+import { ChromeTab, TabOrderQuery, ChromeWindow } from "../interfaces";
+import { handleTabRearrangment } from "../lib/windowUtils";
 
 interface Props {
-  tabs: chrome.tabs.Tab[];
+  window: ChromeWindow;
   maxTabs: number;
   onShowTabs: () => void;
+  onRearrangeTab: (query: TabOrderQuery) => void;
 }
 
 const TabContainer = styled.div`
@@ -23,17 +25,28 @@ const TabContainer = styled.div`
   }
 `;
 
-export const TabPreview = ({ tabs, onShowTabs, maxTabs }: Props) => {
-  if (tabs.length === 0) {
+export const TabPreview = ({
+  window,
+  onShowTabs,
+  onRearrangeTab,
+  maxTabs
+}: Props) => {
+  if (window.tabs.length === 0) {
     return null;
   }
 
   return (
     <TabContainer>
-      {tabs.slice(0, maxTabs).map(tab => (
-        <TabLabel key={tab.id} tab={tab} />
+      {window.tabs.slice(0, maxTabs).map((tab, index) => (
+        <TabLabel
+          key={tab.id}
+          window={window}
+          tab={tab}
+          onHoverTab={handleTabRearrangment("x", index, tab, onRearrangeTab)}
+          onDropTab={tabId => onRearrangeTab({ type: "commit", tabId })}
+        />
       ))}
-      {tabs.length > maxTabs ? (
+      {window.tabs.length > maxTabs ? (
         <Button
           onClick={e => {
             e.stopPropagation();
@@ -46,7 +59,7 @@ export const TabPreview = ({ tabs, onShowTabs, maxTabs }: Props) => {
           }}
           size="mini"
         >
-          + {tabs.length - maxTabs} tabs
+          + {window.tabs.length - maxTabs} tabs
         </Button>
       ) : null}
     </TabContainer>
