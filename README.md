@@ -1,4 +1,4 @@
-[[https://github.com/username/repository/blob/master/img/octocat.png|alt="Flow Tabs Logo"]]
+[[https://github.com/mrapogee/flowtabs/blob/master/img/flowtabs-logo.png|alt="FlowTabs"]]
 
 # Flow Tabs
 
